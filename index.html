@@ -601,117 +601,61 @@
     </div>
  
 <script>
-    // --- 1. CÁC HÀM XỬ LÝ ĐÓNG/MỞ POPUP CƠ BẢN ---
-    var modal = document.getElementById("myModal");
+    // --- 1. CẤU HÌNH LIÊN KẾT GOOGLE SHEET (DÁN LINK CỦA BẠN VÀO ĐÂY) ---
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzNvtxeL5WFVkt9tJdQc7sWG0hu9hIE47tJanMCDYlfs77rO-bqc3DuQQ5qhA61iG6LOQ/exec"; 
 
-    // Hàm đóng popup
-    function closeModal() {
-        modal.style.display = "none";
-    }
-
-    // Khi click ra ngoài vùng popup thì cũng đóng lại
-    window.onclick = function(event) {
-        if (event.target == modal) {
-            closeModal();
-        }
-    }
-
-    // --- 2. XỬ LÝ LOGIC TICK CHỌN ---
-    var currentCell = null; // Biến lưu ô đang được click
-
-    function toggleTick(cell) {
-        currentCell = cell; // Lưu lại ô người dùng vừa bấm
-        
-        // Lấy tên đề tài ở ô bên cạnh (xử lý an toàn hơn)
-        var tenDeTai = "";
-        if(cell.previousElementSibling) {
-            tenDeTai = cell.previousElementSibling.innerText.trim();
-            // Xóa xuống dòng và khoảng trắng thừa
-            tenDeTai = tenDeTai.replace(/[\n\r]+/g, ' ').replace(/\s{2,}/g, ' '); 
-        }
-
-        var tieuDePopup = "";
-        var noiDungPopup = "";
-
-        // Kiểm tra: Đang tick hay đang trống?
-        if (cell.innerHTML.trim() === "") {
-            // --- TRƯỜNG HỢP 1: MUỐN CHỌN ---
-            tieuDePopup = "XÁC NHẬN ĐĂNG KÝ";
-            noiDungPopup = `
-                <p>Bạn có chắc chắn muốn chọn đề tài:</p>
-                <div style="background: #f0f7ff; padding: 15px; border-left: 4px solid #003399; margin: 10px 0; color: #003399; font-weight: bold;">
-                    ${tenDeTai}
-                </div>
-                <p>Hành động này sẽ đánh dấu tên bạn vào danh sách.</p>
-                <div class="modal-btn-group">
-                    <button class="btn-cancel" onclick="closeModal()">Suy nghĩ lại</button>
-                    <button class="btn-confirm" onclick="confirmAction()">Đồng ý chọn</button>
-                </div>
-            `;
-        } else {
-            // --- TRƯỜNG HỢP 2: MUỐN HỦY ---
-            tieuDePopup = "XÁC NHẬN HỦY BỎ";
-            noiDungPopup = `
-                <p>Bạn đã đăng ký đề tài này rồi.</p>
-                <p>Bạn có chắc chắn muốn <strong>HỦY BỎ</strong> lựa chọn này không?</p>
-                <div class="modal-btn-group">
-                    <button class="btn-cancel" onclick="closeModal()">Không hủy</button>
-                    <button class="btn-confirm" style="background: linear-gradient(135deg, #ff416c, #ff4b2b);" onclick="confirmAction()">Xác nhận Hủy</button>
-                </div>
-            `;
-        }
-
-        // Đẩy nội dung vào Popup và hiển thị lên
-        document.getElementById("modalTitle").innerText = tieuDePopup;
-        document.getElementById("modalBody").innerHTML = noiDungPopup;
-        modal.style.display = "block";
-    }
-
-    // --- 3. THỰC HIỆN HÀNH ĐỘNG KHI ẤN ĐỒNG Ý ---
-    function confirmAction() {
-        if (currentCell) {
-            // Nếu ô đang trống -> Đánh dấu tick
-            if (currentCell.innerHTML.trim() === "") {
-                currentCell.innerHTML = "&#10004;"; // Dấu tick V
-                currentCell.style.color = "#008000";
-                currentCell.style.fontSize = "20pt";
-            } 
-            // Nếu ô đã có tick -> Xóa đi
-            else {
-                currentCell.innerHTML = "";
-                currentCell.removeAttribute("style"); // Xóa luôn style màu mè
-            }
-        }
-        closeModal(); // Đóng popup sau khi xong
-    }
-
-    // --- 1. CẤU HÌNH POPUP CƠ BẢN ---
+    // --- 2. CÁC BIẾN & HÀM CƠ BẢN ---
     var modal = document.getElementById("myModal");
     var modalTitle = document.getElementById("modalTitle");
     var modalBody = document.getElementById("modalBody");
+    var currentCell = null; 
+    var currentName = "";   
 
-    function closeModal() {
-        modal.style.display = "none";
-    }
+    function closeModal() { modal.style.display = "none"; }
+    window.onclick = function(event) { if (event.target == modal) closeModal(); }
 
-    window.onclick = function(event) {
-        if (event.target == modal) closeModal();
-    }
+    // --- 3. HÀM TỰ ĐỘNG KHÔI PHỤC KHI MỞ WEB (QUAN TRỌNG) ---
+    // Chạy ngay khi web vừa tải xong
+    window.addEventListener('DOMContentLoaded', (event) => {
+        // Lấy vị trí ô (Index) và tên đã lưu trong bộ nhớ máy
+        var savedIndex = localStorage.getItem("Nhom8_DaChon_Index");
+        var savedName = localStorage.getItem("Nhom8_DaChon_Ten");
 
-    // --- 2. BIẾN TOÀN CỤC LƯU TRẠNG THÁI ---
-    var currentCell = null; // Lưu ô đang thao tác
-    var currentName = "";   // Lưu tên người dùng vừa nhập
+        // Nếu tìm thấy dữ liệu cũ
+        if (savedIndex !== null && savedName) {
+            currentName = savedName; // Khôi phục tên người dùng
+            
+            // Lấy danh sách tất cả các ô chọn
+            var allCells = document.querySelectorAll(".col-assignee");
+            
+            // Tìm lại đúng cái ô ở vị trí cũ (savedIndex)
+            if (allCells[savedIndex]) {
+                var cell = allCells[savedIndex];
+                // Vẽ lại dấu tick
+                cell.innerHTML = "&#10004;";
+                cell.style.color = "#008000";
+                cell.style.fontSize = "20pt";
+                cell.setAttribute("title", "Đăng ký bởi: " + savedName);
+            }
+        }
+    });
 
-    // --- 3. HÀM XỬ LÝ KHI CLICK VÀO Ô ---
+    // --- 4. HÀM XỬ LÝ KHI CLICK VÀO Ô ---
     function toggleTick(cell) {
         currentCell = cell; 
         
-        // Nếu ô ĐÃ CÓ TICK -> Hỏi Hủy luôn (không cần nhập tên lại)
+        // Nếu ô ĐÃ CÓ TICK -> Hỏi Hủy
         if (cell.innerHTML.trim() !== "") {
             showCancelConfirm();
         } 
-        // Nếu ô TRỐNG -> Hiện Popup nhập tên trước
+        // Nếu ô TRỐNG -> Hiện Popup nhập tên
         else {
+            // Kiểm tra xem người này đã chọn ô nào khác chưa?
+            // (Mỗi người chỉ được chọn 1, nếu muốn chọn lại phải hủy cái cũ trước)
+            if (localStorage.getItem("Nhom8_DaChon_Index") !== null) {
+                alert("Bạn đã chọn một đề tài rồi! Vui lòng hủy đề tài cũ trước khi chọn mới.");
+                return; 
+            }
             showNameInput();
         }
     }
@@ -721,7 +665,7 @@
         modalTitle.innerText = "THÔNG TIN SINH VIÊN";
         modalBody.innerHTML = `
             <div class="input-group">
-                <label>Vui lòng nhập Họ và tên của bạn:</label>
+                <label>Vui lòng nhập Họ và Tên của bạn:</label>
                 <input type="text" id="studentName" class="custom-input" placeholder="Ví dụ: Nguyễn Văn A" autocomplete="off">
                 <div id="errorMsg" class="error-msg">Vui lòng nhập tên để tiếp tục!</div>
             </div>
@@ -731,35 +675,29 @@
             </div>
         `;
         modal.style.display = "block";
-        
-        // Tự động đưa con trỏ chuột vào ô nhập cho tiện
-        setTimeout(function(){ document.getElementById("studentName").focus(); }, 100);
+        setTimeout(function(){ 
+            var input = document.getElementById("studentName");
+            if(input) input.focus(); 
+        }, 100);
     }
 
-    // Kiểm tra xem đã nhập tên chưa
     function validateName() {
         var input = document.getElementById("studentName");
         var error = document.getElementById("errorMsg");
         var name = input.value.trim();
 
         if (name === "") {
-            error.style.display = "block"; // Hiện lỗi nếu để trống
+            error.style.display = "block";
             input.style.border = "2px solid red";
         } else {
-            currentName = name; // Lưu tên lại
-            showSelectConfirm(); // Chuyển sang bước xác nhận
+            currentName = name;
+            showSelectConfirm();
         }
     }
 
-    // --- BƯỚC B: HIỆN XÁC NHẬN CHỌN (Sau khi đã có tên) ---
+    // --- BƯỚC B: HIỆN XÁC NHẬN CHỌN ---
     function showSelectConfirm() {
-        // Lấy tên đề tài
-        var tenDeTai = "";
-        if(currentCell.previousElementSibling) {
-            tenDeTai = currentCell.previousElementSibling.innerText.trim();
-            tenDeTai = tenDeTai.replace(/[\n\r]+/g, ' ').replace(/\s{2,}/g, ' '); 
-        }
-
+        var tenDeTai = getTopicName(currentCell);
         modalTitle.innerText = "XÁC NHẬN ĐĂNG KÝ";
         modalBody.innerHTML = `
             <p>Sinh viên: <strong>${currentName}</strong></p>
@@ -768,12 +706,13 @@
                 ${tenDeTai}
             </div>
             <div class="modal-btn-group">
-                <button class="btn-cancel" onclick="showNameInput()">Quay lại</button> <button class="btn-confirm" onclick="finishAction(true)">Xác nhận chọn</button>
+                <button class="btn-cancel" onclick="showNameInput()">Quay lại</button>
+                <button class="btn-confirm" onclick="finishAction(true)">Xác nhận chọn</button>
             </div>
         `;
     }
 
-    // --- BƯỚC C: HIỆN XÁC NHẬN HỦY (Cho ô đã chọn) ---
+    // --- BƯỚC C: HIỆN XÁC NHẬN HỦY ---
     function showCancelConfirm() {
         modalTitle.innerText = "XÁC NHẬN HỦY BỎ";
         modalBody.innerHTML = `
@@ -787,75 +726,31 @@
         modal.style.display = "block";
     }
 
-    // --- 4. HÀM CHỐT ĐƠN (Thực hiện thay đổi lên ô) ---
+    // --- 5. HÀM CHỐT ĐƠN (LƯU & GỬI) ---
     function finishAction(isSelecting) {
         if (currentCell) {
-            if (isSelecting) {
-                // CHỌN: Đánh dấu tick
-                currentCell.innerHTML = "&#10004;"; 
-                currentCell.style.color = "#008000";
-                currentCell.style.fontSize = "20pt";
-                
-                // Mẹo hay: Lưu tên vào thuộc tính title, khi rê chuột vào dấu tick sẽ hiện tên!
-                currentCell.setAttribute("title", "Đăng ký bởi: " + currentName);
-            } else {
-                // HỦY: Xóa trắng
-                currentCell.innerHTML = "";
-                currentCell.removeAttribute("style");
-                currentCell.removeAttribute("title");
-            }
-        }
-        closeModal();
-    }
-// --- CẤU HÌNH LIÊN KẾT GOOGLE SHEET ---
-    // Dán cái link bạn vừa copy ở BƯỚC 2 vào giữa dấu ngoặc kép dưới đây
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzNvtxeL5WFVkt9tJdQc7sWG0hu9hIE47tJanMCDYlfs77rO-bqc3DuQQ5qhA61iG6LOQ/exec"; 
-
-    // --- HÀM GỬI DỮ LIỆU ĐI ÂM THẦM (Dùng Fetch API) ---
-    function sendDataToSheet(name, topic, action) {
-        // Tạo dữ liệu để gửi
-        var formData = new FormData();
-        formData.append('name', name);
-        formData.append('topic', topic);
-        formData.append('action', action); // "Đăng ký" hoặc "Hủy"
-
-        // Gửi đi bằng fetch (mode: no-cors để không bị chặn, gửi âm thầm)
-        fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors', 
-            body: formData
-        })
-        .then(() => {
-            console.log("Đã gửi dữ liệu thành công!");
-        })
-        .catch(error => {
-            console.error("Lỗi gửi dữ liệu:", error);
-        });
-    }
-
-    // --- 4. HÀM CHỐT ĐƠN (Đã nâng cấp để gửi dữ liệu) ---
-    function finishAction(isSelecting) {
-        if (currentCell) {
-            // Lấy tên đề tài để gửi đi
-            var tenDeTaiGuiDi = "";
-            if(currentCell.previousElementSibling) {
-                tenDeTaiGuiDi = currentCell.previousElementSibling.innerText.trim();
-                tenDeTaiGuiDi = tenDeTaiGuiDi.replace(/[\n\r]+/g, ' ').replace(/\s{2,}/g, ' '); 
-            }
+            var tenDeTaiGuiDi = getTopicName(currentCell);
+            
+            // Tìm số thứ tự của ô hiện tại (Index) để lưu
+            var allCells = document.querySelectorAll(".col-assignee");
+            var cellIndex = Array.from(allCells).indexOf(currentCell);
 
             if (isSelecting) {
-                // --- XỬ LÝ KHI CHỌN ---
+                // --- CHỌN ---
                 currentCell.innerHTML = "&#10004;"; 
                 currentCell.style.color = "#008000";
                 currentCell.style.fontSize = "20pt";
                 currentCell.setAttribute("title", "Đăng ký bởi: " + currentName);
 
-                // GỌI HÀM GỬI DỮ LIỆU
+                // Gửi Google Sheet
                 sendDataToSheet(currentName, tenDeTaiGuiDi, "Đăng ký");
 
+                // LƯU VÀO BỘ NHỚ (Lưu số thứ tự ô và tên)
+                localStorage.setItem("Nhom8_DaChon_Index", cellIndex);
+                localStorage.setItem("Nhom8_DaChon_Ten", currentName);
+
             } else {
-                // --- XỬ LÝ KHI HỦY ---
-                // Lấy tên người đã đăng ký trước đó (trong title) để lưu log hủy nếu cần
+                // --- HỦY ---
                 var oldName = currentCell.getAttribute("title") || "Không rõ";
                 oldName = oldName.replace("Đăng ký bởi: ", "");
 
@@ -863,36 +758,44 @@
                 currentCell.removeAttribute("style");
                 currentCell.removeAttribute("title");
 
-                // GỌI HÀM GỬI DỮ LIỆU (Ghi nhận là Hủy)
+                // Gửi Google Sheet
                 sendDataToSheet(oldName, tenDeTaiGuiDi, "Đã Hủy");
+
+                // XÓA KHỎI BỘ NHỚ
+                localStorage.removeItem("Nhom8_DaChon_Index");
+                localStorage.removeItem("Nhom8_DaChon_Ten");
             }
         }
         closeModal();
     }
 
-//Chặn lưu
-// --- BẢO VỆ BẢN QUYỀN (CHỐNG COPY/XEM CODE) ---
-    
-    // 1. Chặn Click chuột phải
-    document.addEventListener('contextmenu', function(event) {
-        event.preventDefault(); // Ngăn không cho hiện menu chuột phải
-        alert("Xin lỗi, chức năng này đã bị khóa để bảo vệ bản quyền!");
-    });
-
-    // 2. Chặn các phím tắt xem code (F12, Ctrl+U, Ctrl+S, Ctrl+Shift+I)
-    document.onkeydown = function(e) {
-        // Chặn F12 (Developer Tools)
-        if (e.keyCode === 123) {
-            return false;
+    // Hàm phụ: Lấy tên đề tài và làm sạch chữ
+    function getTopicName(cell) {
+        if(cell && cell.previousElementSibling) {
+            var text = cell.previousElementSibling.innerText.trim();
+            return text.replace(/[\n\r]+/g, ' ').replace(/\s{2,}/g, ' ');
         }
+        return "Không xác định";
+    }
+
+    // Hàm gửi dữ liệu (Âm thầm)
+    function sendDataToSheet(name, topic, action) {
+        if(GOOGLE_SCRIPT_URL === "DÁN_LINK_APP_SCRIPT_CỦA_BẠN_VÀO_ĐÂY") return; // Chưa dán link thì bỏ qua
         
-        // Chặn Ctrl+U (Xem nguồn), Ctrl+S (Lưu trang), Ctrl+P (In ấn)
-        if (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83 || e.keyCode === 80)) {
-            return false;
-        }
+        var formData = new FormData();
+        formData.append('name', name);
+        formData.append('topic', topic);
+        formData.append('action', action);
 
-        // Chặn Ctrl+Shift+I (Inspect Element)
-        if (e.ctrlKey && e.shiftKey && e.keyCode === 73) {
+        fetch(GOOGLE_SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: formData })
+        .then(() => console.log("Đã gửi dữ liệu."))
+        .catch(error => console.error("Lỗi:", error));
+    }
+
+    // --- BẢO VỆ (CHỐNG CLICK PHẢI) ---
+    document.addEventListener('contextmenu', function(event) { event.preventDefault(); });
+    document.onkeydown = function(e) {
+        if (e.keyCode === 123 || (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83 || e.keyCode === 80))) {
             return false;
         }
     };
