@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phân Công Nhóm 8</title>
+    <style>
+        /* --- 1. CẤU HÌNH CƠ BẢN --- */
+        :root {
+            --bg-deep: #0f2027;
+            --bg-mid: #203a43;
+            --bg-light: #2c5364;
+            --accent-blue: #003399; /* Xanh đậm trường ĐH */
+            --highlight-bg: #e8f4fa;
+            --border-color: #cbd5e0;
+        }
+
+        body {
+            /* Nền Galaxy Deep Space */
+            background: linear-gradient(135deg, var(--bg-deep), var(--bg-mid), var(--bg-light));
+            font-family: "Times New Roman", Times, serif;
+            font-style: normal !important;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 40px 20px;
+            overflow-x: hidden;
+            perspective: 1000px;
+        }
+
+        /* --- 2. TỜ GIẤY A4 BIẾT BAY (LEVITATION) --- */
+        .page-container {
+            animation: floatPaper 6s ease-in-out infinite;
+	    width: 100%; 
+            display: flex;
+            justify-content: center;
+        }
+
+        .page {
+            background: white;
+            width: 210mm;
+            min-height: 297mm;
+            padding: 20mm 25mm;
+            box-sizing: border-box;
+            position: relative;
+            box-shadow: 
+                0 1px 1px rgba(0,0,0,0.15), 
+                0 2px 2px rgba(0,0,0,0.15), 
+                0 4px 4px rgba(0,0,0,0.15), 
+                0 8px 8px rgba(0,0,0,0.15),
+                0 16px 16px rgba(0,0,0,0.15);
+            animation: slideUpFade 1s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+            opacity: 0;
+            transform: translateY(50px);
+            overflow: hidden;
+        }
+
+        @keyframes floatPaper {
+            0% { transform: translateY(0px) rotateX(0deg); }
+            50% { transform: translateY(-15px) rotateX(1deg); }
+            100% { transform: translateY(0px) rotateX(0deg); }
+        }
+
+        @keyframes slideUpFade {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Hiệu ứng quét sáng (Shine) */
+        .page::after {
+            content: "";
+            position: absolute;
+            top: 0; left: -150%;
+            width: 100%; height: 100%;
+            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+            transform: skewX(-25deg);
+            animation: shine 8s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes shine {
+            0% { left: -150%; }
+            20% { left: 150%; }
+            100% { left: 150%; }
+        }
+
+        /* --- 3. HEADER --- */
+        .header { text-align: center; margin-bottom: 25px; }
+        .header h4 { margin: 5px 0; font-size: 13pt; text-transform: uppercase; color: #333; }
+        
+        .school-name {
+            color: var(--accent-blue);
+            font-size: 15pt;
+            font-weight: 900;
+            letter-spacing: 0.5px;
+            text-shadow: 0 1px 0 #ccc;
+        }
+
+        .header .sub-title {
+            font-size: 11pt; text-align: right; margin-top: 10px; color: #555;
+        }
+
+        .divider {
+            height: 3px;
+            background: double #333;
+            margin: 10px 0 20px 0;
+            width: 100%;
+        }
+
+        .main-title {
+            text-align: center; font-weight: bold; font-size: 13pt;
+            margin: 20px 0; text-transform: uppercase; line-height: 1.4;
+        }
+
+        /* --- 4. BẢNG KHOA HỌC --- */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13pt;
+            border: 2px solid #000000;
+        }
+
+        th, td {
+            border: 1px solid #000000; 
+    
+    padding: 10px 12px;
+    vertical-align: top;
+    color: #000;
+        }
+
+/* --- SỬA LẠI ĐỘ RỘNG VÀ THÊM HIỆU ỨNG CON TRỎ --- */
+	.col-content { 
+ 	   width: 85%; /* Tăng độ rộng phần nội dung lên 85% */
+ 	   text-align: justify; 
+	}
+
+	.col-assignee { 
+   		width: 15%; /* Giảm độ rộng ô chọn xuống còn 15% */
+   		text-align: center; 
+  		font-weight: bold; 
+    		background-color: #fafafa;
+    		vertical-align: middle;
+    		cursor: pointer; /* Biến con chuột thành hình bàn tay khi rê vào */
+    		user-select: none; /* Chặn bôi đen văn bản để click cho mượt */
+    		transition: background 0.2s;
+	}
+
+	.col-assignee:hover {
+    		background-color: #e6f7ff; /* Hiệu ứng đổi màu nền nhẹ khi rê chuột vào */
+}
+        /* Dòng của Triều */
+        .my-task td {
+            background-color: #f0f7ff;
+            border-bottom: 2px solid var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        /* --- 5. NÚT CHỨC NĂNG --- */
+        .shape-btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 12px;
+            margin: 2px 0;
+            background: linear-gradient(90deg, #003399, #00d4ff, #003399);
+            background-size: 200% auto;
+            color: white;
+            border-radius: 15px;
+            text-decoration: none;
+            font-size: 11pt;
+            cursor: pointer;
+            box-shadow: 0 3px 5px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            animation: gradientMove 3s linear infinite;
+            font-weight: bold;
+        }
+
+        @keyframes gradientMove {
+            0% { background-position: 0% center; }
+            100% { background-position: 200% center; }
+        }
+
+        .shape-btn:hover {
+            transform: scale(1.05) translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.3);
+        }
+
+        /* --- 6. FOOTER NOTES (Đã thay đổi icon) --- */
+        .footer-notes {
+            font-size: 12pt;
+            margin-top: 30px;
+            border-top: 1px solid #333;
+            padding-top: 15px;
+        }
+        .footer-notes ul { list-style: none; padding: 0; }
+        .footer-notes li {
+            position: relative; padding-left: 20px; margin-bottom: 12px;
+            line-height: 1.6;
+        }
+        /* Thay ô vuông bằng dấu gạch ngang */
+        .footer-notes li::before {
+            content: "–"; 
+            position: absolute; left: 0; font-weight: bold; top: 0px;
+        }
+
+        .page-footer {
+            display: flex; justify-content: space-between; margin-top: 30px;
+            font-size: 11pt; border-top: 1px solid #ddd; padding-top: 10px;
+        }
+
+        /* --- 7. POPUP MODAL --- */
+        .modal {
+            display: none; position: fixed; z-index: 9999; left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,10,20,0.7);
+            backdrop-filter: blur(8px);
+        }
+        .modal-content {
+            background-color: #fff; margin: 5% auto; padding: 0;
+            width: 600px; max-height: 90vh; border-radius: 8px;
+            box-shadow: 0 0 30px rgba(0,255,255,0.2);
+            animation: modalZoom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-family: "Times New Roman", Times, serif;
+            display: flex; flex-direction: column;
+        }
+        @keyframes modalZoom { from {transform: scale(0); opacity: 0;} to {transform: scale(1); opacity: 1;} }
+        
+        .modal-header {
+            background: linear-gradient(135deg, var(--accent-blue), #0056b3);
+            color: white; padding: 15px 20px;
+            border-radius: 8px 8px 0 0;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-shrink: 0;
+        }
+        .modal-body { 
+            padding: 25px; 
+            font-size: 13pt; 
+            line-height: 1.5; 
+            overflow-y: auto; /* Cho phép cuộn nếu nội dung dài */
+        }
+        .close { color: white; font-size: 28px; cursor: pointer; font-weight: bold;}
+        .close:hover { color: #ffeb3b; }
+        
+        /* Style cho nội dung bên trong popup */
+        .modal-body ul { margin-left: 20px; }
+        .modal-body li { margin-bottom: 5px; }
+        .modal-body h4 { margin-top: 15px; margin-bottom: 5px; color: var(--accent-blue); text-decoration: underline;}
+        
+        /* --- DÁN ĐÈ ĐOẠN NÀY VÀO CUỐI PHẦN STYLE NHA --- */
+        
+        /* Giao diện tối ưu cho điện thoại */
+        @media screen and (max-width: 768px) {
+            body {
+                /* QUAN TRỌNG: Chuyển sang display block để không bị cắt giấy */
+                display: block; 
+                padding: 10px;
+                height: auto;
+                align-items: unset;
+                justify-content: unset;
+            }
+
+            .page-container {
+                display: block;
+                width: 100%;
+                animation: none; /* Tắt hoạt ảnh bay lơ lửng */
+                padding-bottom: 50px; /* Thêm khoảng trống đuôi trang */
+            }
+
+            .page {
+                width: 100% !important; /* Bắt buộc full màn hình */
+                max-width: 100%;
+                min-height: auto;
+                padding: 15px 10px; /* Lề trái phải 10px cho thoáng */
+                margin: 0 auto; /* Căn giữa tự nhiên */
+                transform: none !important;
+                opacity: 1; /* Hiện ngay không cần hiệu ứng */
+                box-sizing: border-box; /* Đảm bảo padding không làm phình giấy */
+            }
+
+            /* Xử lý bảng để không bị tràn */
+            table { 
+                font-size: 11pt; 
+                width: 100%;
+                /* Nếu bảng vẫn bị tràn, dòng này sẽ ép nó nằm gọn */
+                table-layout: fixed; 
+                word-wrap: break-word;
+            }
+            
+            th, td { 
+                padding: 5px 2px; /* Giảm đệm ô */
+            }
+
+            /* Chỉnh lại cỡ chữ tiêu đề */
+            .header h4 { font-size: 10pt; }
+            .school-name { font-size: 12pt; }
+            .main-title { font-size: 11pt; margin: 15px 0; }
+            
+            /* Popup full màn hình dễ đọc */
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+                max-height: 80vh;
+            }
+
+            .footer-notes { font-size: 10pt; }
+            /* Nút bấm nhỏ lại xíu cho vừa dòng */
+            .shape-btn { 
+                font-size: 9pt; 
+                padding: 4px 8px; 
+                white-space: normal; /* Cho phép xuống dòng trong nút */
+                text-align: left;
+                height: auto;
+            }
+            .shape-btn br { display: none; } /* Ẩn xuống dòng thừa nếu có */
+        }
+
+	/* --- CSS CHO NÚT TRONG POPUP XÁC NHẬN --- */
+.modal-btn-group {
+    text-align: right; /* Căn nút sang phải */
+    margin-top: 25px;
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+}
+
+.btn-confirm, .btn-cancel {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    font-size: 11pt;
+    font-weight: bold;
+    cursor: pointer;
+    margin-left: 10px;
+    transition: transform 0.2s;
+}
+
+/* Nút Đồng ý màu Xanh */
+.btn-confirm {
+    background: linear-gradient(135deg, #00b09b, #96c93d);
+    color: white;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+/* Nút Hủy màu Xám/Đỏ */
+.btn-cancel {
+    background-color: #e0e0e0;
+    color: #333;
+}
+
+.btn-confirm:hover, .btn-cancel:hover {
+    transform: scale(1.05);
+    opacity: 0.9;
+}
+
+/* --- CSS CHO Ô NHẬP TÊN --- */
+.input-group {
+    margin-bottom: 15px;
+    text-align: left;
+}
+.input-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+}
+.custom-input {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #ccc;
+    border-radius: 5px;
+    font-size: 11pt;
+    box-sizing: border-box; /* Đảm bảo padding không làm vỡ khung */
+    transition: border-color 0.3s;
+}
+.custom-input:focus {
+    border-color: #003399; /* Màu xanh khi bấm vào nhập */
+    outline: none;
+}
+.error-msg {
+    color: red;
+    font-size: 9pt;
+    margin-top: 5px;
+    display: none; /* Mặc định ẩn */
+}
+
+    </style>
+</head>
+<body>
+
+    <div class="page-container">
+        <div class="page">
+            <div class="header">
+                <h4>BỘ CÔNG THƯƠNG</h4>
+                <h4 class="school-name">TRƯỜNG ĐẠI HỌC CÔNG THƯƠNG THÀNH PHỐ HỒ CHÍ MINH</h4>
+                <div class="divider"></div>
+                <h4>CHỌN ĐỀ TÀI PHÂN CÔNG CÔNG VIỆC</h4>
+                </div>
+
+            <div class="main-title">
+                DANH SÁCH CÁC ĐỀ TÀI – CẤU TRÚC DỮ LIỆU VÀ GIẢI THUẬT
+            </div>
+
+            <table>
+	<tr style="background: #eee;">
+    		<th class="col-content" style="text-align: center;">DANH SÁCH CÁC ĐỀ TÀI</th>
+    		<th class="col-content" style="text-align: center;">CHỌN</th>
+	</tr>
+
+	<tr>
+    <td class="col-content">
+        <strong>Đề tài 01. </strong>Quản lý cho thuê xe tự lái bằng DSLK đơn<br>
+    </td>
+    <td class="col-assignee" onclick="toggleTick(this)"></td>
+</tr>
+                <tr>
+                    <td class="col-content">
+                        <strong>Đề tài 02.</strong> Quản lý đăng ký môn học của sinh viên bằng DSLK đơn<br>
+                    </td>
+    <td class="col-assignee" onclick="toggleTick(this)"></td>
+                </tr>
+		<tr>
+                    <td class="col-content">
+                        <strong>Đề tài 03. </strong>Quản lý hồ sơ bệnh nhân tại phòng khám bằng DSLK đơn
+                    </td>
+    <td class="col-assignee" onclick="toggleTick(this)"></td>
+                </tr>
+		<tr>
+                    <td class="col-content">
+                        <strong>Đề tài 04. </strong>Quản lý thư viện sách bằng DSLK đơn
+                    </td>
+    <td class="col-assignee" onclick="toggleTick(this)"></td>
+                </tr>
+ <tr>
+                    <td class="col-content">
+                       <strong>Đề tài 05. </strong>Quản lý nhân sự công ty nhỏ bằng DSLK đơn
+                    </td>
+    <td class="col-assignee" onclick="toggleTick(this)"></td>
+                </tr>
+
+                <tr>
+                    <td class="col-content">
+                       <strong>Đề tài 06. </strong>Mô phỏng chức năng Undo-Redo trong trình soạn thảo bằng Stack và Queue
+                    </td>
+    <td class="col-assignee" onclick="toggleTick(this)"></td>
+                </tr>
+                <tr>
+                    <td class="col-content">
+                        <strong>Đề tài 07. </strong>Kiểm tra và đánh giá biểu thức toán học bằng Stack và Queue
+                    </td>
+    <td class="col-assignee" onclick="toggleTick(this)"></td>
+                </tr>
+<tr>
+                    <td class="col-content">
+			<strong>Đề tài 08. </strong>Kiểm tra tính hợp lệ của mã nguồn C bằng Stack và Queue</td>
+    <td class="col-assignee" onclick="toggleTick(this)"></td>
+                </tr>
+                <tr>
+                    <td class="col-content">
+			<strong>Đề tài 09. </strong>Mô phỏng quá trình quay lui (Backtracking) bằng Stack và Queue</td>
+    <td class="col-assignee" onclick="toggleTick(this)"></td>
+                </tr>
+                <tr>
+                    <td class="col-content">
+			<strong>Đề tài 10. </strong>Quản lý xếp hàng khám bệnh bằng Queue</td>
+    <td class="col-assignee" onclick="toggleTick(this)"></td>
+                </tr>
+                <tr>
+                    <td class="col-content">
+			<strong>Đề tài 11. </strong>Hệ thống in ấn văn phòng bằng Queue</td>
+    <td class="col-assignee" onclick="toggleTick(this)"></td>
+                </tr>
+
+                <tr>
+                    <td class="col-content">
+                    <strong>Đề tài 12. </strong>Mô phỏng xử lý yêu cầu Server bằng Queue
+                    </td>
+    <td class="col-assignee" onclick="toggleTick(this)"></td>
+                </tr>
+		<tr>
+                    <td class="col-content">
+                        <strong>Đề tài 13. </strong>Quản lý đơn hàng thương mại điện tử bằng Queue
+                    </td>
+    <td class="col-assignee" onclick="toggleTick(this)"></td>
+                </tr>
+
+                <tr>
+                    <td class="col-content">
+                       <strong>Đề tài 14. </strong>Quản lý lịch làm việc bác sĩ bằng Queue
+                    </td>
+    <td class="col-assignee" onclick="toggleTick(this)"></td>
+                </tr>
+
+                <tr>
+                    <td class="col-content">
+                        <strong>Đề tài 15. </strong>Quản lý danh bạ điện thoại bằng BST
+                    </td>
+    <td class="col-assignee" onclick="toggleTick(this)"></td>
+                </tr>
+                
+                <tr>
+                    <td class="col-content">
+                        <strong>Đề tài 16. </strong>Quản lý điểm sinh viên bằng BST
+                    </td>
+    <td class="col-assignee" onclick="toggleTick(this)"></td>
+                </tr>
+		<tr>
+                    <td class="col-content">
+                        <strong>Đề tài 17. </strong>Quản lý sản phẩm cửa hàng bằng BST
+                    </td>
+    <td class="col-assignee" onclick="toggleTick(this)"></td>
+                </tr>
+		<tr>
+                    <td class="col-content">
+                        <strong>Đề tài 18. </strong>Từ điển Anh – Việt bằng BST
+                    </td>
+    <td class="col-assignee" onclick="toggleTick(this)"></td>
+                </tr>
+		<tr>
+                    <td class="col-content">
+                        <strong>Đề tài 19. </strong>Quản lý hồ sơ sinh viên bằng cây AVL
+                    </td>
+    <td class="col-assignee" onclick="toggleTick(this)"></td>
+                </tr>
+		<tr>
+                    <td class="col-content">
+                        <strong>Đề tài 20. </strong>Quản lý tài khoản người dùng bằng cây AVL
+                    </td>
+    <td class="col-assignee" onclick="toggleTick(this)"></td>
+                </tr>
+		<tr>
+                    <td class="col-content">
+                        <strong>Đề tài 21. </strong>Quản lý kết quả thi bằng cây AVL
+                    </td>
+    <td class="col-assignee" onclick="toggleTick(this)"></td>
+                </tr>
+		<tr>
+                    <td class="col-content">
+                        <strong>Đề tài 22. </strong>Quản lý định danh công dân bằng AVL
+                    </td>
+    <td class="col-assignee" onclick="toggleTick(this)"></td>
+                </tr>
+		<tr>
+                    <td class="col-content">
+                        <strong>Đề tài 23. </strong>Mô phỏng chỉ mục dữ liệu trong CSDL bằng B-Tree
+                    </td>
+    <td class="col-assignee" onclick="toggleTick(this)"></td>
+                </tr>
+		<tr>
+                    <td class="col-content">
+                        <strong>Đề tài 24. </strong>Quản lý hồ sơ lưu trữ số lượng lớn bằng B-Tree
+                    </td>
+    <td class="col-assignee" onclick="toggleTick(this)"></td>
+                </tr>
+		<tr>
+                    <td class="col-content">
+                        <strong>Đề tài 25. </strong>Hệ thống quản lý thư viện số bằng B-Tree
+                    </td>
+    <td class="col-assignee" onclick="toggleTick(this)"></td>
+                </tr>
+
+            </table>
+
+            <div style="text-align: center; font-weight: bold; margin-top: 15px;">------- HẾT -------</div>
+
+            <div class="footer-notes">
+                <strong>* Ghi chú:</strong>
+                <ul>
+                    <li>Chỉ chọn <strong>duy nhất </strong>một đề tài.</li>
+                    <li>Ấn chọn vào ô <strong>CHỌN</strong> trước đề tài mà bạn mong muốn.</li>
+                </ul>
+            </div>
+
+            <div class="page-footer">
+                <span>Nhóm cấu trúc dữ liệu và giải thuật</span>
+                <span>Trang 1</span>
+            </div>
+        </div>
+    </div>
+<div id="myModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle" style="margin:0;">THÔNG BÁO</h3>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="modalBody">
+                </div>
+        </div>
+    </div>
+ 
+<script>
+    // --- 1. CÁC HÀM XỬ LÝ ĐÓNG/MỞ POPUP CƠ BẢN ---
+    var modal = document.getElementById("myModal");
+
+    // Hàm đóng popup
+    function closeModal() {
+        modal.style.display = "none";
+    }
+
+    // Khi click ra ngoài vùng popup thì cũng đóng lại
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            closeModal();
+        }
+    }
+
+    // --- 2. XỬ LÝ LOGIC TICK CHỌN ---
+    var currentCell = null; // Biến lưu ô đang được click
+
+    function toggleTick(cell) {
+        currentCell = cell; // Lưu lại ô người dùng vừa bấm
+        
+        // Lấy tên đề tài ở ô bên cạnh (xử lý an toàn hơn)
+        var tenDeTai = "";
+        if(cell.previousElementSibling) {
+            tenDeTai = cell.previousElementSibling.innerText.trim();
+            // Xóa xuống dòng và khoảng trắng thừa
+            tenDeTai = tenDeTai.replace(/[\n\r]+/g, ' ').replace(/\s{2,}/g, ' '); 
+        }
+
+        var tieuDePopup = "";
+        var noiDungPopup = "";
+
+        // Kiểm tra: Đang tick hay đang trống?
+        if (cell.innerHTML.trim() === "") {
+            // --- TRƯỜNG HỢP 1: MUỐN CHỌN ---
+            tieuDePopup = "XÁC NHẬN ĐĂNG KÝ";
+            noiDungPopup = `
+                <p>Bạn có chắc chắn muốn chọn đề tài:</p>
+                <div style="background: #f0f7ff; padding: 15px; border-left: 4px solid #003399; margin: 10px 0; color: #003399; font-weight: bold;">
+                    ${tenDeTai}
+                </div>
+                <p>Hành động này sẽ đánh dấu tên bạn vào danh sách.</p>
+                <div class="modal-btn-group">
+                    <button class="btn-cancel" onclick="closeModal()">Suy nghĩ lại</button>
+                    <button class="btn-confirm" onclick="confirmAction()">Đồng ý chọn</button>
+                </div>
+            `;
+        } else {
+            // --- TRƯỜNG HỢP 2: MUỐN HỦY ---
+            tieuDePopup = "XÁC NHẬN HỦY BỎ";
+            noiDungPopup = `
+                <p>Bạn đã đăng ký đề tài này rồi.</p>
+                <p>Bạn có chắc chắn muốn <strong>HỦY BỎ</strong> lựa chọn này không?</p>
+                <div class="modal-btn-group">
+                    <button class="btn-cancel" onclick="closeModal()">Không hủy</button>
+                    <button class="btn-confirm" style="background: linear-gradient(135deg, #ff416c, #ff4b2b);" onclick="confirmAction()">Xác nhận Hủy</button>
+                </div>
+            `;
+        }
+
+        // Đẩy nội dung vào Popup và hiển thị lên
+        document.getElementById("modalTitle").innerText = tieuDePopup;
+        document.getElementById("modalBody").innerHTML = noiDungPopup;
+        modal.style.display = "block";
+    }
+
+    // --- 3. THỰC HIỆN HÀNH ĐỘNG KHI ẤN ĐỒNG Ý ---
+    function confirmAction() {
+        if (currentCell) {
+            // Nếu ô đang trống -> Đánh dấu tick
+            if (currentCell.innerHTML.trim() === "") {
+                currentCell.innerHTML = "&#10004;"; // Dấu tick V
+                currentCell.style.color = "#008000";
+                currentCell.style.fontSize = "20pt";
+            } 
+            // Nếu ô đã có tick -> Xóa đi
+            else {
+                currentCell.innerHTML = "";
+                currentCell.removeAttribute("style"); // Xóa luôn style màu mè
+            }
+        }
+        closeModal(); // Đóng popup sau khi xong
+    }
+
+    // --- 1. CẤU HÌNH POPUP CƠ BẢN ---
+    var modal = document.getElementById("myModal");
+    var modalTitle = document.getElementById("modalTitle");
+    var modalBody = document.getElementById("modalBody");
+
+    function closeModal() {
+        modal.style.display = "none";
+    }
+
+    window.onclick = function(event) {
+        if (event.target == modal) closeModal();
+    }
+
+    // --- 2. BIẾN TOÀN CỤC LƯU TRẠNG THÁI ---
+    var currentCell = null; // Lưu ô đang thao tác
+    var currentName = "";   // Lưu tên người dùng vừa nhập
+
+    // --- 3. HÀM XỬ LÝ KHI CLICK VÀO Ô ---
+    function toggleTick(cell) {
+        currentCell = cell; 
+        
+        // Nếu ô ĐÃ CÓ TICK -> Hỏi Hủy luôn (không cần nhập tên lại)
+        if (cell.innerHTML.trim() !== "") {
+            showCancelConfirm();
+        } 
+        // Nếu ô TRỐNG -> Hiện Popup nhập tên trước
+        else {
+            showNameInput();
+        }
+    }
+
+    // --- BƯỚC A: HIỆN FORM NHẬP TÊN ---
+    function showNameInput() {
+        modalTitle.innerText = "THÔNG TIN SINH VIÊN";
+        modalBody.innerHTML = `
+            <div class="input-group">
+                <label>Vui lòng nhập Họ và tên của bạn:</label>
+                <input type="text" id="studentName" class="custom-input" placeholder="Ví dụ: Nguyễn Văn A" autocomplete="off">
+                <div id="errorMsg" class="error-msg">Vui lòng nhập tên để tiếp tục!</div>
+            </div>
+            <div class="modal-btn-group">
+                <button class="btn-cancel" onclick="closeModal()">Hủy bỏ</button>
+                <button class="btn-confirm" onclick="validateName()">Tiếp tục</button>
+            </div>
+        `;
+        modal.style.display = "block";
+        
+        // Tự động đưa con trỏ chuột vào ô nhập cho tiện
+        setTimeout(function(){ document.getElementById("studentName").focus(); }, 100);
+    }
+
+    // Kiểm tra xem đã nhập tên chưa
+    function validateName() {
+        var input = document.getElementById("studentName");
+        var error = document.getElementById("errorMsg");
+        var name = input.value.trim();
+
+        if (name === "") {
+            error.style.display = "block"; // Hiện lỗi nếu để trống
+            input.style.border = "2px solid red";
+        } else {
+            currentName = name; // Lưu tên lại
+            showSelectConfirm(); // Chuyển sang bước xác nhận
+        }
+    }
+
+    // --- BƯỚC B: HIỆN XÁC NHẬN CHỌN (Sau khi đã có tên) ---
+    function showSelectConfirm() {
+        // Lấy tên đề tài
+        var tenDeTai = "";
+        if(currentCell.previousElementSibling) {
+            tenDeTai = currentCell.previousElementSibling.innerText.trim();
+            tenDeTai = tenDeTai.replace(/[\n\r]+/g, ' ').replace(/\s{2,}/g, ' '); 
+        }
+
+        modalTitle.innerText = "XÁC NHẬN ĐĂNG KÝ";
+        modalBody.innerHTML = `
+            <p>Sinh viên: <strong>${currentName}</strong></p>
+            <p>Bạn có chắc chắn muốn đăng ký đề tài:</p>
+            <div style="background: #f0f7ff; padding: 15px; border-left: 4px solid #003399; margin: 10px 0; color: #003399; font-weight: bold;">
+                ${tenDeTai}
+            </div>
+            <div class="modal-btn-group">
+                <button class="btn-cancel" onclick="showNameInput()">Quay lại</button> <button class="btn-confirm" onclick="finishAction(true)">Xác nhận chọn</button>
+            </div>
+        `;
+    }
+
+    // --- BƯỚC C: HIỆN XÁC NHẬN HỦY (Cho ô đã chọn) ---
+    function showCancelConfirm() {
+        modalTitle.innerText = "XÁC NHẬN HỦY BỎ";
+        modalBody.innerHTML = `
+            <p>Đề tài này đã được đăng ký.</p>
+            <p>Bạn có chắc chắn muốn <strong>HỦY BỎ</strong> lựa chọn này không?</p>
+            <div class="modal-btn-group">
+                <button class="btn-cancel" onclick="closeModal()">Giữ nguyên</button>
+                <button class="btn-confirm" style="background: linear-gradient(135deg, #ff416c, #ff4b2b);" onclick="finishAction(false)">Hủy đăng ký</button>
+            </div>
+        `;
+        modal.style.display = "block";
+    }
+
+    // --- 4. HÀM CHỐT ĐƠN (Thực hiện thay đổi lên ô) ---
+    function finishAction(isSelecting) {
+        if (currentCell) {
+            if (isSelecting) {
+                // CHỌN: Đánh dấu tick
+                currentCell.innerHTML = "&#10004;"; 
+                currentCell.style.color = "#008000";
+                currentCell.style.fontSize = "20pt";
+                
+                // Mẹo hay: Lưu tên vào thuộc tính title, khi rê chuột vào dấu tick sẽ hiện tên!
+                currentCell.setAttribute("title", "Đăng ký bởi: " + currentName);
+            } else {
+                // HỦY: Xóa trắng
+                currentCell.innerHTML = "";
+                currentCell.removeAttribute("style");
+                currentCell.removeAttribute("title");
+            }
+        }
+        closeModal();
+    }
+// --- CẤU HÌNH LIÊN KẾT GOOGLE SHEET ---
+    // Dán cái link bạn vừa copy ở BƯỚC 2 vào giữa dấu ngoặc kép dưới đây
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzNvtxeL5WFVkt9tJdQc7sWG0hu9hIE47tJanMCDYlfs77rO-bqc3DuQQ5qhA61iG6LOQ/exec"; 
+
+    // --- HÀM GỬI DỮ LIỆU ĐI ÂM THẦM (Dùng Fetch API) ---
+    function sendDataToSheet(name, topic, action) {
+        // Tạo dữ liệu để gửi
+        var formData = new FormData();
+        formData.append('name', name);
+        formData.append('topic', topic);
+        formData.append('action', action); // "Đăng ký" hoặc "Hủy"
+
+        // Gửi đi bằng fetch (mode: no-cors để không bị chặn, gửi âm thầm)
+        fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors', 
+            body: formData
+        })
+        .then(() => {
+            console.log("Đã gửi dữ liệu thành công!");
+        })
+        .catch(error => {
+            console.error("Lỗi gửi dữ liệu:", error);
+        });
+    }
+
+    // --- 4. HÀM CHỐT ĐƠN (Đã nâng cấp để gửi dữ liệu) ---
+    function finishAction(isSelecting) {
+        if (currentCell) {
+            // Lấy tên đề tài để gửi đi
+            var tenDeTaiGuiDi = "";
+            if(currentCell.previousElementSibling) {
+                tenDeTaiGuiDi = currentCell.previousElementSibling.innerText.trim();
+                tenDeTaiGuiDi = tenDeTaiGuiDi.replace(/[\n\r]+/g, ' ').replace(/\s{2,}/g, ' '); 
+            }
+
+            if (isSelecting) {
+                // --- XỬ LÝ KHI CHỌN ---
+                currentCell.innerHTML = "&#10004;"; 
+                currentCell.style.color = "#008000";
+                currentCell.style.fontSize = "20pt";
+                currentCell.setAttribute("title", "Đăng ký bởi: " + currentName);
+
+                // GỌI HÀM GỬI DỮ LIỆU
+                sendDataToSheet(currentName, tenDeTaiGuiDi, "Đăng ký");
+
+            } else {
+                // --- XỬ LÝ KHI HỦY ---
+                // Lấy tên người đã đăng ký trước đó (trong title) để lưu log hủy nếu cần
+                var oldName = currentCell.getAttribute("title") || "Không rõ";
+                oldName = oldName.replace("Đăng ký bởi: ", "");
+
+                currentCell.innerHTML = "";
+                currentCell.removeAttribute("style");
+                currentCell.removeAttribute("title");
+
+                // GỌI HÀM GỬI DỮ LIỆU (Ghi nhận là Hủy)
+                sendDataToSheet(oldName, tenDeTaiGuiDi, "Đã Hủy");
+            }
+        }
+        closeModal();
+    }
+</script>
+</body>
+</html>
