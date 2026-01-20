@@ -868,6 +868,33 @@
         }
         closeModal();
     }
+
+//Chặn lưu
+// --- BẢO VỆ BẢN QUYỀN (CHỐNG COPY/XEM CODE) ---
+    
+    // 1. Chặn Click chuột phải
+    document.addEventListener('contextmenu', function(event) {
+        event.preventDefault(); // Ngăn không cho hiện menu chuột phải
+        alert("Xin lỗi, chức năng này đã bị khóa để bảo vệ bản quyền!");
+    });
+
+    // 2. Chặn các phím tắt xem code (F12, Ctrl+U, Ctrl+S, Ctrl+Shift+I)
+    document.onkeydown = function(e) {
+        // Chặn F12 (Developer Tools)
+        if (e.keyCode === 123) {
+            return false;
+        }
+        
+        // Chặn Ctrl+U (Xem nguồn), Ctrl+S (Lưu trang), Ctrl+P (In ấn)
+        if (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83 || e.keyCode === 80)) {
+            return false;
+        }
+
+        // Chặn Ctrl+Shift+I (Inspect Element)
+        if (e.ctrlKey && e.shiftKey && e.keyCode === 73) {
+            return false;
+        }
+    };
 </script>
 </body>
 </html>
